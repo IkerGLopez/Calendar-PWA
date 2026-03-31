@@ -36,3 +36,9 @@ Este documento detalla los pasos para construir la PWA de Calendario basándose 
   - La UI fluye correctamente bajo la zona segura.
   - El modal de permisos se dispara solo al hacer clic.
   - Se recibe una notificación PUSH correctamente calculada tras configurar un evento a X minutos vista, incluso con la app cerrada.
+
+## Fase 6: Despliegue y Entorno (Producción)
+- **Certificado SSL (HTTPS):** Asegurar que todo el stack (especialmente el Frontend donde se registra el Service Worker) se sirve por HTTPS, requisito obligatorio en iOS.
+- **Frontend (Static/Edge):** Posibles plataformas para el build de Vite: Vercel, Netlify o Cloudflare Pages.
+- **Backend (Daemon/Long-running):** Desplegar el Node.js con `node-cron` en un servicio que soporte flujos constantes/background (ej. Render, Railway, Fly.io, o VPS tradicional) para que no se congele el proceso del Cron Job.
+- **Variables de Entorno:** Separar configuración local y de producción (ej. `.env`) gestionando de forma segura `VITE_API_URL` para CORS y peticiones, y las claves VAPID (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`) del backend.
