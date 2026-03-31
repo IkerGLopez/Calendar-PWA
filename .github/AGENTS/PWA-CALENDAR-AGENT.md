@@ -25,7 +25,7 @@ Este proyecto es una Progressive Web App (PWA) de calendario diseñada bajo una 
 * Implementar la función que suscriba al usuario al PushManager usando la clave pública VAPID y envíe el objeto de suscripción al backend.
 
 ## 5. Especificaciones del Backend (Node + Express)
-* Configurar Express para recibir peticiones REST (CORS habilitado para el frontend).
+* Configurar Express para recibir peticiones REST (CORS habilitado para el dominio del frontend en producción).
 * Generar y almacenar las llaves VAPID necesarias para la autenticación en los servidores de notificaciones (APNs/FCM).
 * Crear un endpoint POST /api/subscribe para almacenar las suscripciones asociadas a los usuarios/dispositivos.
 * Crear endpoints CRUD (GET, POST, PUT, DELETE) para la gestión de los eventos del calendario.
@@ -40,7 +40,13 @@ Este proyecto es una Progressive Web App (PWA) de calendario diseñada bajo una 
 6. El Backend envía el payload al servicio de notificaciones usando VAPID.
 7. El Service Worker (sw.js) en el iPhone del usuario recibe el evento push y muestra la notificación visual en pantalla.
 
-## 7. Criterios de Aceptación
+## 7. Entorno de Despliegue (Producción y Testing iOS)
+* **Requisito HTTPS:** La PWA debe estar desplegada bajo un certificado SSL válido (HTTPS) para que el Service Worker y el registro web-push funcionen en Safari iOS.
+* **Frontend:** Desplegar la build generada por Vite en plataformas estáticas o Edge (ej. Vercel, Netlify o Cloudflare Pages).
+* **Backend:** Desplegar el servidor Node.js en plataformas que soporten procesos continuos para que el Cron Job no se suspenda (ej. Render, Railway, Fly.io, o un VPS tradicional).
+* **Variables de Entorno (.env):** El código debe usar variables de entorno para diferenciar `VITE_API_URL` (local vs producción) y gestionar las claves VAPID privadas en el backend de forma segura.
+
+## 8. Criterios de Aceptación
 Para dar el proyecto por finalizado, se deben cumplir obligatoriamente los siguientes puntos:
 * [ ] La PWA se puede instalar correctamente en la pantalla de inicio de un iPhone a través de Safari.
 * [ ] La interfaz gráfica se adapta al dispositivo y respeta el área segura de iOS (notch, dynamic island y barra inferior de navegación).
@@ -51,8 +57,9 @@ Para dar el proyecto por finalizado, se deben cumplir obligatoriamente los sigui
 * [ ] El proceso en segundo plano (Cron) detecta correctamente cuándo debe enviarse una notificación según la antelación configurada.
 * [ ] Las notificaciones Push llegan y se muestran visualmente en un dispositivo iOS (16.4+) aunque la PWA no esté activa en primer plano.
 * [ ] Todas las dependencias han sido instaladas y gestionadas exclusivamente mediante pnpm.
+* [ ] El sistema está desplegado en internet (HTTPS) y el frontend se comunica correctamente con la API del backend en producción.
 
-## 8. Mensajes de Commit
+## 9. Mensajes de Commit
 Al final de cada respuesta que implique la creación, modificación o eliminación de código o archivos, el agente DEBE proporcionar un mensaje de commit en castellano resumiendo los cambios realizados. 
 * El formato del mensaje debe seguir convenciones estándar (ej. feat: [descripción], fix: [descripción], docs: [descripción]).
 * Este mensaje debe presentarse en un bloque de código independiente al final de la interacción.
