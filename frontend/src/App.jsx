@@ -22,7 +22,7 @@ function App() {
 
   const fetchEvents = async () => {
     try {
-      const res = await fetch(`/events`);
+      const res = await fetch(`${API_URL}/events`);
       if (res.ok) {
         const data = await res.json();
         setEvents(data);
@@ -34,7 +34,7 @@ function App() {
 
   const handleSaveEvent = async (eventData) => {
     try {
-      const res = await fetch(`/events`, {
+      const res = await fetch(`${API_URL}/events`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(eventData),
@@ -49,7 +49,7 @@ function App() {
 
   const handleDeleteEvent = async (id) => {
     try {
-      await fetch(`/events/`, { method: 'DELETE' });
+      await fetch(`${API_URL}/events/${id}`, { method: 'DELETE' });
       fetchEvents();
     } catch (err) {
       console.error('Error deleting event:', err);
@@ -65,7 +65,43 @@ function App() {
     if (pushSupported) {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
-        alert('Permisos de notificaci�n concedidos. El SW se encargar� de suscribir.');
+        try {
+          const swReg = await navigator.serviceWorker.ready;
+          // Pedir llave pública al backend
+          const vapidRes = await fetch(`${API_URL}/vapidPublicKey`);
+          const vapidData = await vapidRes.json();
+          const pubKey = vapidData.publicKey;
+          
+          // Helper para decodificar base64 a Uint8Array
+          function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) {
+              outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+          }
+
+          // Suscribirse
+          const subscription = await swReg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(pubKey)
+          });
+
+          // Enviar la suscripción al Backend
+          await fetch(`${API_URL}/subscribe`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(subscription)
+          });
+          
+          alert('¡Suscrito con éxito a las notificaciones Push!');
+        } catch (err) {
+          console.error('Error al suscribir', err);
+          alert('Ocurrió un error al intentar suscribir este dispositivo a Notificaciones');
+        }
       } else {
         alert('Permiso denegado.');
       }

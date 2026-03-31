@@ -7,12 +7,8 @@ const start = () => {
   cron.schedule('* * * * *', () => {
     const now = new Date();
     
-    // Obtener todos los eventos para comprobar su fecha de inicio y la antelación
-    db.all(`SELECT * FROM events`, [], (err, events) => {
-      if (err) {
-        console.error("Error al leer eventos en Cron Job:", err);
-        return;
-      }
+      // Obtener todos los eventos para comprobar su fecha de inicio y la antelación
+      const events = db.getEvents();
       
       events.forEach(event => {
         // Construimos el objeto Date del evento (asumiendo formato local YYYY-MM-DD y HH:MM)
@@ -28,19 +24,14 @@ const start = () => {
            sendPushNotifications(event);
         }
       });
-    });
   });
 };
 
 function sendPushNotifications(event) {
-  db.all(`SELECT * FROM subscriptions`, [], (err, subs) => {
-    if (err) {
-      console.error("Error al obtener suscripciones:", err);
-      return;
-    }
-    
-    const payload = JSON.stringify({
-      title: `Calendario: ${event.title}`,
+  const subs = db.getSubscriptions();
+
+  const payload = JSON.stringify({
+    title: `Calendario: ${event.title}`,
       body: `Faltan ${event.reminderMinutes} minutos. El evento empieza a las ${event.time}.`,
       icon: '/icon-180x180.png'
     });
@@ -55,11 +46,10 @@ function sendPushNotifications(event) {
         console.error('Error al enviar Push:', err);
         // Si la suscripción ha expirado o ya no es válida (código 410 Gone) en iOS/servicios
         if (err.statusCode === 410) {
-          db.run(`DELETE FROM subscriptions WHERE endpoint = ?`, [row.endpoint]);
+          db.deleteSubscription(row.endpoint);
         }
       });
     });
-  });
 }
 
 module.exports = { start };

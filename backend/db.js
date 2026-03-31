@@ -1,26 +1,39 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+// db.js (Base de datos en memoria para el Prototipo)
 
-const dbPath = path.resolve(__dirname, 'database.sqlite');
-const db = new sqlite3.Database(dbPath);
+let events = [];
+let subscriptions = [];
+let currentEventId = 1;
+let currentSubId = 1;
 
-db.serialize(() => {
-  // Crear tabla de eventos
-  db.run(`CREATE TABLE IF NOT EXISTS events (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    date TEXT NOT NULL,
-    time TEXT NOT NULL,
-    color TEXT DEFAULT '#3B82F6',
-    reminderMinutes INTEGER DEFAULT 0
-  )`);
+module.exports = {
+  // --- Eventos ---
+  getEvents: () => {
+    return events;
+  },
+  insertEvent: (eventData) => {
+    const newEvent = { id: currentEventId++, ...eventData };
+    events.push(newEvent);
+    return newEvent;
+  },
+  deleteEvent: (id) => {
+    events = events.filter(e => e.id !== parseInt(id));
+  },
 
-  // Crear tabla de suscripciones Push (usando el endpoint como campo único)
-  db.run(`CREATE TABLE IF NOT EXISTS subscriptions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    endpoint TEXT UNIQUE NOT NULL,
-    keys TEXT NOT NULL
-  )`);
-});
-
-module.exports = db;
+  // --- Suscripciones ---
+  getSubscriptions: () => {
+    return subscriptions;
+  },
+  insertSubscription: (endpoint, keys) => {
+    // Evitar duplicados por endpoint
+    if (!subscriptions.some(s => s.endpoint === endpoint)) {
+      subscriptions.push({
+        id: currentSubId++,
+        endpoint,
+        keys: JSON.stringify(keys)
+      });
+    }
+  },
+  deleteSubscription: (endpoint) => {
+    subscriptions = subscriptions.filter(s => s.endpoint !== endpoint);
+  }
+};
