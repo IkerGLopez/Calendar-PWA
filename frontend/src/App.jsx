@@ -1,121 +1,102 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import React, { useState, useEffect } from 'react';
+import CalendarGrid from './components/CalendarGrid';
+import EventModal from './components/EventModal';
+import Onboarding from './components/Onboarding';
+import { Bell } from 'lucide-react';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [events, setEvents] = useState([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [pushSupported, setPushSupported] = useState(false);
+
+  useEffect(() => {
+    fetchEvents();
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      setPushSupported(true);
+    }
+  }, []);
+
+  const fetchEvents = async () => {
+    try {
+      const res = await fetch(`/events`);
+      if (res.ok) {
+        const data = await res.json();
+        setEvents(data);
+      }
+    } catch (err) {
+      console.error('Error fetching events:', err);
+    }
+  };
+
+  const handleSaveEvent = async (eventData) => {
+    try {
+      const res = await fetch(`/events`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(eventData),
+      });
+      if (res.ok) {
+        fetchEvents();
+      }
+    } catch (err) {
+      console.error('Error saving event:', err);
+    }
+  };
+
+  const handleDeleteEvent = async (id) => {
+    try {
+      await fetch(`/events/`, { method: 'DELETE' });
+      fetchEvents();
+    } catch (err) {
+      console.error('Error deleting event:', err);
+    }
+  };
+
+  const handleDayClick = (dateStr) => {
+    setSelectedDate(dateStr);
+    setModalOpen(true);
+  };
+
+  const requestPushPermission = async () => {
+    if (pushSupported) {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        alert('Permisos de notificación concedidos. El SW se encargará de suscribir.');
+      } else {
+        alert('Permiso denegado.');
+      }
+    }
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="min-h-screen flex flex-col pt-safe px-safe pb-safe">
+      <header className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-gray-200 z-30 pt-safe">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold shadow-md">C</div>
+            <h1 className="text-xl font-extrabold text-gray-800 tracking-tight">Calendar PWA</h1>
+          </div>
+          {pushSupported && (
+            <button onClick={requestPushPermission} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-full text-sm font-medium transition">
+              <Bell size={16} />
+              <span className="hidden sm:inline">Activar Alertas</span>
+            </button>
+          )}
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+      </header>
 
-      <div className="ticks"></div>
+      <main className="flex-1 w-full max-w-4xl mx-auto p-4 sm:p-6 sm:pb-12 mb-16 sm:mb-0">
+        <CalendarGrid currentDate={currentDate} setCurrentDate={setCurrentDate} events={events} onDayClick={handleDayClick} onDeleteEvent={handleDeleteEvent} />
+      </main>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      <EventModal isOpen={modalOpen} onClose={() => setModalOpen(false)} onSave={handleSaveEvent} selectedDate={selectedDate} />
+      <Onboarding />
+    </div>
+  );
 }
 
-export default App
+export default App;
