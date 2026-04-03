@@ -1,3 +1,8 @@
+import { precacheAndRoute } from 'workbox-precaching';
+
+// Precargar los assets (html, js, css) generados por Vite en el Build
+precacheAndRoute(self.__WB_MANIFEST);
+
 self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
