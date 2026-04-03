@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(express.json());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
+  origin: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
@@ -52,11 +52,12 @@ app.get('/api/events', (req, res) => {
 
 // 4. Crear un evento
 app.post('/api/events', (req, res) => {
-  const { title, date, time, color, reminderMinutes } = req.body;
+  const { title, date, time, endTime, color, reminderMinutes } = req.body;
   if (!title || !date || !time) {
     return res.status(400).json({ error: 'Faltan campos obligatorios' });
   }
-  const newEvent = db.insertEvent({ title, date, time, color, reminderMinutes: reminderMinutes || 0 });
+  const eventEndTime = endTime || time; // Fallback al inicio si no hay
+  const newEvent = db.insertEvent({ title, date, time, endTime: eventEndTime, color, reminderMinutes: reminderMinutes || 0 });
   res.status(201).json({ id: newEvent.id, message: 'Evento creado' });
 });
 
@@ -64,6 +65,21 @@ app.post('/api/events', (req, res) => {
 app.delete('/api/events/:id', (req, res) => {
   db.deleteEvent(req.params.id);
   res.json({ message: 'Evento eliminado' });
+});
+
+// 6. Actualizar un evento
+app.put('/api/events/:id', (req, res) => {
+  const { title, date, time, endTime, color, reminderMinutes } = req.body;
+  if (!title || !date || !time) {
+    return res.status(400).json({ error: 'Faltan campos obligatorios' });
+  }
+  const eventEndTime = endTime || time;
+  const updated = db.updateEvent(req.params.id, { title, date, time, endTime: eventEndTime, color, reminderMinutes: reminderMinutes || 0 });
+  if (updated) {
+    res.json({ message: 'Evento actualizado', event: updated });
+  } else {
+    res.status(404).json({ error: 'Evento no encontrado' });
+  }
 });
 
 // Iniciar procesos

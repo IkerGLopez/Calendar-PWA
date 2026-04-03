@@ -15,6 +15,14 @@ module.exports = {
     events.push(newEvent);
     return newEvent;
   },
+  updateEvent: (id, eventData) => {
+    const index = events.findIndex(e => e.id === parseInt(id));
+    if (index !== -1) {
+      events[index] = { ...events[index], ...eventData };
+      return events[index];
+    }
+    return null;
+  },
   deleteEvent: (id) => {
     events = events.filter(e => e.id !== parseInt(id));
   },

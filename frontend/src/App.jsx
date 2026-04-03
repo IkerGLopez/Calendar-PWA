@@ -11,7 +11,9 @@ function App() {
   const [events, setEvents] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedHour, setSelectedHour] = useState(null);
   const [pushSupported, setPushSupported] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
 
   useEffect(() => {
     fetchEvents();
@@ -34,8 +36,12 @@ function App() {
 
   const handleSaveEvent = async (eventData) => {
     try {
-      const res = await fetch(`${API_URL}/events`, {
-        method: 'POST',
+      const isEdit = !!eventData.id;
+      const url = isEdit ? `${API_URL}/events/${eventData.id}` : `${API_URL}/events`;
+      const method = isEdit ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(eventData),
       });
@@ -51,13 +57,23 @@ function App() {
     try {
       await fetch(`${API_URL}/events/${id}`, { method: 'DELETE' });
       fetchEvents();
+      setModalOpen(false);
     } catch (err) {
       console.error('Error deleting event:', err);
     }
   };
 
-  const handleDayClick = (dateStr) => {
+  const handleDayClick = (dateStr, hour = null) => {
     setSelectedDate(dateStr);
+    setSelectedEvent(null);
+    setSelectedHour(hour);
+    setModalOpen(true);
+  };
+
+  const handleEventClick = (event) => {
+    setSelectedDate(event.date);
+    setSelectedHour(null);
+    setSelectedEvent(event);
     setModalOpen(true);
   };
 
@@ -126,10 +142,10 @@ function App() {
       </header>
 
       <main className="flex-1 w-full max-w-4xl mx-auto p-4 sm:p-6 sm:pb-12 mb-16 sm:mb-0">
-        <CalendarGrid currentDate={currentDate} setCurrentDate={setCurrentDate} events={events} onDayClick={handleDayClick} onDeleteEvent={handleDeleteEvent} />
+        <CalendarGrid currentDate={currentDate} setCurrentDate={setCurrentDate} events={events} onDayClick={handleDayClick} onEventClick={handleEventClick} />
       </main>
 
-      <EventModal isOpen={modalOpen} onClose={() => setModalOpen(false)} onSave={handleSaveEvent} selectedDate={selectedDate} />
+      <EventModal isOpen={modalOpen} onClose={() => setModalOpen(false)} onSave={handleSaveEvent} onDelete={handleDeleteEvent} selectedDate={selectedDate} selectedHour={selectedHour} selectedEvent={selectedEvent} />
       <Onboarding />
     </div>
   );

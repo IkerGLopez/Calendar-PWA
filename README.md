@@ -4,9 +4,9 @@ Una Progressive Web App (PWA) de calendario diseñada específicamente con una m
 
 ## ✨ Funcionalidades Principales
 
-* **Visualización de Calendario:** Vista interactiva mensual con indicadores visuales de los eventos programados.
+* **Visualización de Calendario:** Vista interactiva con selector para alternar entre modo **Mensual** y **Semanal**. El modo semanal incluye un **Time Grid dividido por horas**, donde los eventos se dibujan respetando su duración y horas de inicio/fin, permitiendo visualizar los solapamientos. 
 * **Gestión de Eventos:** Creación de eventos personalizados donde puedes configurar:
-  * Título y hora.
+  * Título, hora de inicio y **hora de fin**.
   * Color representativo (código de colores visual).
   * Antelación del aviso (En el momento, 5 min, 15 min, 30 min, 1 hora, 1 día).
 * **Notificaciones Web Push Nativas:** Alertas push que llegarán a tu dispositivo en el momento exacto programado, **incluso si la aplicación está cerrada**.
@@ -21,7 +21,7 @@ Debido a las políticas de Apple, para disfrutar de la experiencia completa (esp
 ### 1. Instalación (Añadir a pantalla de inicio)
 1. Abre la URL de la aplicación en **Safari**.
 2. Verás un banner inferior indicando que debes instalar la app.
-3. Toca el botón de **Copartir** (el cuadrado con la flecha hacia arriba) en la barra de navegación de Safari.
+3. Toca el botón de **Compartir** (el cuadrado con la flecha hacia arriba) en la barra de navegación de Safari.
 4. Desliza hacia abajo y selecciona **"Añadir a pantalla de inicio"**.
 5. Cierra Safari y abre la nueva aplicación desde el icono en tu pantalla de inicio.
 
