@@ -10,7 +10,16 @@ const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(express.json());
-app.use(cors()); // Permitir acceso desde el frontend Vite
+app.use(cors({
+  origin: process.env.FRONTEND_URL || '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
+
+// Endpoint 'keep-awake' para evitar que servidores gratuitos duerman
+app.get('/api/ping', (req, res) => {
+  res.send('pong');
+});
 
 // Configurar Web Push VAPID Keys
 webpush.setVapidDetails(
