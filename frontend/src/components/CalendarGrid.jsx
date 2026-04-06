@@ -107,7 +107,7 @@ export default function CalendarGrid({ currentDate, setCurrentDate, events, onDa
         <div className="flex border-b border-gray-100 bg-gray-50/90 sticky top-0 z-20">
           <div className="w-16 flex-shrink-0 border-r border-gray-100"></div>
           {days.map((day) => (
-            <div key={day.toString()} className={`flex-1 min-w-[50px] text-center py-2 border-r border-gray-100 font-medium text-xs sm:text-sm ${isSameDay(day, new Date()) ? 'text-blue-600 bg-blue-50/50' : 'text-gray-600'}`}>
+            <div key={day.toString()} className={`flex-1 min-w-0 text-center py-2 border-r border-gray-100 font-medium text-xs sm:text-sm ${isSameDay(day, new Date()) ? 'text-blue-600 bg-blue-50/50' : 'text-gray-600'}`}>
               <div className="uppercase text-[10px] text-gray-400">{format(day, 'EEE', { locale: es })}</div>
               <div className={`mt-0.5 mx-auto w-6 h-6 flex items-center justify-center rounded-full ${isSameDay(day, new Date()) ? 'bg-blue-600 text-white' : ''}`}>
                 {format(day, 'd')}
@@ -117,7 +117,7 @@ export default function CalendarGrid({ currentDate, setCurrentDate, events, onDa
         </div>
 
         <div className="flex relative">
-          <div className="w-16 flex-shrink-0 border-r border-gray-100 relative bg-white z-10">
+          <div className="w-12 sm:w-16 flex-shrink-0 border-r border-gray-100 relative bg-white z-10">
             {hours.map((hour) => (
               <div key={hour} className="h-16 border-b border-gray-100/50 text-[10px] text-gray-400 text-right pr-2 pt-1 font-medium select-none">
                 {`${hour.toString().padStart(2, '0')}:00`}
@@ -137,7 +137,7 @@ export default function CalendarGrid({ currentDate, setCurrentDate, events, onDa
 
               return (
                 <div key={day.toString()}
-                  className={`flex-1 border-r border-gray-100 relative min-w-[50px] ${isPastDay ? 'bg-gray-200/50 cursor-not-allowed' : 'cursor-pointer hover:bg-blue-50/10 transition-colors'}`}
+                  className={`flex-1 border-r border-gray-100 relative min-w-0 ${isPastDay ? 'bg-gray-200/50 cursor-not-allowed' : 'cursor-pointer hover:bg-blue-50/10 transition-colors'}`}
                   onClick={(e) => {
                     if (isPastDay) return;
                     const rect = e.currentTarget.getBoundingClientRect();
