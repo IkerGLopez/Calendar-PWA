@@ -36,45 +36,45 @@ app.get('/api/vapidPublicKey', (req, res) => {
 });
 
 // 2. Suscribir un dispositivo
-app.post('/api/subscribe', (req, res) => {
+app.post('/api/subscribe', async (req, res) => {
   const subscription = req.body;
   if (!subscription || !subscription.endpoint) {
     return res.status(400).json({ error: 'Suscripción inválida' });
   }
-  db.insertSubscription(subscription.endpoint, subscription.keys);
+  await db.insertSubscription(subscription.endpoint, subscription.keys);
   res.status(201).json({ message: 'Suscripción guardada con éxito' });
 });
 
 // 3. Obtener eventos
-app.get('/api/events', (req, res) => {
-  res.json(db.getEvents());
+app.get('/api/events', async (req, res) => {
+  res.json(await db.getEvents());
 });
 
 // 4. Crear un evento
-app.post('/api/events', (req, res) => {
+app.post('/api/events', async (req, res) => {
   const { title, date, time, endTime, color, reminderMinutes } = req.body;
   if (!title || !date || !time) {
     return res.status(400).json({ error: 'Faltan campos obligatorios' });
   }
   const eventEndTime = endTime || time; // Fallback al inicio si no hay
-  const newEvent = db.insertEvent({ title, date, time, endTime: eventEndTime, color, reminderMinutes: reminderMinutes || 0 });
+  const newEvent = await db.insertEvent({ title, date, time, endTime: eventEndTime, color, reminderMinutes: reminderMinutes || 0 });
   res.status(201).json({ id: newEvent.id, message: 'Evento creado' });
 });
 
 // 5. Eliminar un evento
-app.delete('/api/events/:id', (req, res) => {
-  db.deleteEvent(req.params.id);
+app.delete('/api/events/:id', async (req, res) => {
+  await db.deleteEvent(req.params.id);
   res.json({ message: 'Evento eliminado' });
 });
 
 // 6. Actualizar un evento
-app.put('/api/events/:id', (req, res) => {
+app.put('/api/events/:id', async (req, res) => {
   const { title, date, time, endTime, color, reminderMinutes } = req.body;
   if (!title || !date || !time) {
     return res.status(400).json({ error: 'Faltan campos obligatorios' });
   }
   const eventEndTime = endTime || time;
-  const updated = db.updateEvent(req.params.id, { title, date, time, endTime: eventEndTime, color, reminderMinutes: reminderMinutes || 0 });
+  const updated = await db.updateEvent(req.params.id, { title, date, time, endTime: eventEndTime, color, reminderMinutes: reminderMinutes || 0 });
   if (updated) {
     res.json({ message: 'Evento actualizado', event: updated });
   } else {
@@ -88,3 +88,4 @@ cronJob.start();
 app.listen(PORT, () => {
   console.log(`🚀 Backend corriendo en http://localhost:${PORT}`);
 });
+

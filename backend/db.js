@@ -1,75 +1,60 @@
-const fs = require('fs');
-const path = require('path');
+const mongoose = require('mongoose');
 
-const DATA_FILE = path.join(__dirname, 'data.json');
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/calendar';
 
-const defaultData = {
-  events: [],
-  subscriptions: [],
-  currentEventId: 1,
-  currentSubId: 1
-};
+// Conectar a MongoDB
+mongoose.connect(MONGODB_URI)
+  .then(() => console.log('?? Conectado a MongoDB Atlas'))
+  .catch(err => console.error('Error conectando a MongoDB:', err));
 
-// Cach� en memoria (RAM) para lecturas instant�neas
-let cache = null;
+// Esquemas
+const eventSchema = new mongoose.Schema({
+  title: String,
+  date: String,
+  time: String,
+  endTime: String,
+  color: String,
+  reminderMinutes: Number
+});
 
-function loadCache() {
-  if (fs.existsSync(DATA_FILE)) {
-    try {
-      cache = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
-    } catch (err) {
-      console.error('Error leyendo data.json, usando valores por defecto:', err);
-      cache = { ...defaultData };
-    }
-  } else {
-    cache = { ...defaultData };
+// Transformar _id a id para que siga funcionando igual en el frontend
+eventSchema.set('toJSON', {
+  virtuals: true,
+  versionKey: false,
+  transform: function (doc, ret) {
+    ret.id = ret._id;
+    delete ret._id;
   }
-}
+});
 
-// Cargar la base de datos a memoria al iniciar el servidor
-loadCache();
+const subscriptionSchema = new mongoose.Schema({
+  endpoint: String,
+  keys: String
+});
 
-// Guardar en disco de forma as�ncrona (no bloquea el hilo principal)
-function saveCache() {
-  fs.writeFile(DATA_FILE, JSON.stringify(cache, null, 2), (err) => {
-    if (err) console.error('Error guardando la base de datos en JSON:', err);
-  });
-}
+const Event = mongoose.model('Event', eventSchema);
+const Subscription = mongoose.model('Subscription', subscriptionSchema);
 
 module.exports = {
-  getEvents: () => cache.events,
-  insertEvent: (eventData) => {
-    const newEvent = { id: cache.currentEventId++, ...eventData };
-    cache.events.push(newEvent);
-    saveCache();
-    return newEvent;
+  getEvents: async () => await Event.find({}),
+  insertEvent: async (eventData) => {
+    const newEvent = new Event(eventData);
+    return await newEvent.save();
   },
-  updateEvent: (id, eventData) => {
-    const index = cache.events.findIndex(e => e.id === parseInt(id));
-    if (index !== -1) {
-      cache.events[index] = { ...cache.events[index], ...eventData };
-      saveCache();
-      return cache.events[index];
-    }
-    return null;
+  updateEvent: async (id, eventData) => {
+    return await Event.findByIdAndUpdate(id, eventData, { new: true });
   },
-  deleteEvent: (id) => {
-    cache.events = cache.events.filter(e => e.id !== parseInt(id));
-    saveCache();
+  deleteEvent: async (id) => {
+    await Event.findByIdAndDelete(id);
   },
-  getSubscriptions: () => cache.subscriptions,
-  insertSubscription: (endpoint, keys) => {
-    if (!cache.subscriptions.some(s => s.endpoint === endpoint)) {
-      cache.subscriptions.push({
-        id: cache.currentSubId++,
-        endpoint,
-        keys: JSON.stringify(keys)
-      });
-      saveCache();
+  getSubscriptions: async () => await Subscription.find({}),
+  insertSubscription: async (endpoint, keys) => {
+    const exists = await Subscription.findOne({ endpoint });
+    if (!exists) {
+      await new Subscription({ endpoint, keys: JSON.stringify(keys) }).save();
     }
   },
-  deleteSubscription: (endpoint) => {
-    cache.subscriptions = cache.subscriptions.filter(s => s.endpoint !== endpoint);
-    saveCache();
+  deleteSubscription: async (endpoint) => {
+    await Subscription.findOneAndDelete({ endpoint });
   }
 };

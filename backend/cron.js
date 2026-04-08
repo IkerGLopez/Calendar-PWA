@@ -3,53 +3,45 @@ const db = require('./db');
 const webpush = require('web-push');
 
 const start = () => {
-  // Se ejecuta cada minuto
-  cron.schedule('* * * * *', () => {
+  cron.schedule('* * * * *', async () => {
     const now = new Date();
-    
-      // Obtener todos los eventos para comprobar su fecha de inicio y la antelación
-      const events = db.getEvents();
-      
-      events.forEach(event => {
-        // Construimos el objeto Date del evento (asumiendo formato local YYYY-MM-DD y HH:MM)
-        const eventDateTime = new Date(`${event.date}T${event.time}:00`);
-        
-        // Diferencia en milisegundos
-        const timeDiffMs = eventDateTime.getTime() - now.getTime();
-        // Diferencia en minutos
-        const timeDiffMinutes = Math.floor(timeDiffMs / 60000);
+    const events = await db.getEvents();
 
-        // Si la diferencia cuadra con el momento de recordatorio (ej. quedan 15 mins exactos)
-        if (timeDiffMinutes === parseInt(event.reminderMinutes)) {
-           sendPushNotifications(event);
-        }
-      });
+    for (const event of events) {
+      const eventDateTime = new Date(`${event.date}T${event.time}:00`);
+      const timeDiffMs = eventDateTime.getTime() - now.getTime();
+      const timeDiffMinutes = Math.floor(timeDiffMs / 60000);
+
+      if (timeDiffMinutes === parseInt(event.reminderMinutes)) {
+         await sendPushNotifications(event);
+      }
+    }
   });
 };
 
-function sendPushNotifications(event) {
-  const subs = db.getSubscriptions();
-
+async function sendPushNotifications(event) {
+  const subs = await db.getSubscriptions();
   const payload = JSON.stringify({
     title: `Calendario: ${event.title}`,
-      body: `Faltan ${event.reminderMinutes} minutos. El evento empieza a las ${event.time}.`,
-      icon: '/icon-180x180.png'
-    });
+    body: `Faltan ${event.reminderMinutes} minutos. El evento empieza a las ${event.time}.`,
+    icon: '/icon-180x180.png'
+  });
 
-    subs.forEach(row => {
-      const pushSubscription = {
-        endpoint: row.endpoint,
-        keys: JSON.parse(row.keys)
-      };
-      
-      webpush.sendNotification(pushSubscription, payload).catch(err => {
-        console.error('Error al enviar Push:', err);
-        // Si la suscripción ha expirado o ya no es válida (código 410 Gone) en iOS/servicios
-        if (err.statusCode === 410) {
-          db.deleteSubscription(row.endpoint);
-        }
-      });
-    });
+  for (const row of subs) {
+    const pushSubscription = {
+      endpoint: row.endpoint,
+      keys: JSON.parse(row.keys)
+    };
+
+    try {
+      await webpush.sendNotification(pushSubscription, payload);
+    } catch (err) {
+      console.error('Error al enviar Push:', err);
+      if (err.statusCode === 410) {
+        await db.deleteSubscription(row.endpoint);
+      }
+    }
+  }
 }
 
 module.exports = { start };
